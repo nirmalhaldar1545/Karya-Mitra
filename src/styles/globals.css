@@ -3,6 +3,13 @@
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  
+  /* Color variables for tubelight navbar - Neon Green Theme */
+  --color-background: 17 24 39; /* gray-900 */
+  --color-foreground: 243 244 246; /* gray-100 */
+  --color-primary: 19 255 170; /* Neon green #13FFAA */
+  --color-border: 55 65 81; /* gray-700 */
+  --color-muted: 31 41 55; /* gray-800 */
 }
 
 /* Smooth scrolling */
