@@ -8,7 +8,7 @@ import { TRPCReactProvider } from "~/trpc/react";
 export const metadata: Metadata = {
   title: "Karya-Mitra | AI-Powered Government Performance Management",
   description: "Transform government productivity with data-driven performance tracking, AI-powered insights, and transparent KPI measurement. A Smart India Hackathon project.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/logo.png.png" }],
 };
 
 const geist = Geist({
