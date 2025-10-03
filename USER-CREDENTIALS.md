@@ -25,6 +25,10 @@ Status:     Active
 - System configuration
 - All administrative functions
 
+**Dashboard Access:**
+- ❌ Employee Dashboard (Access Denied)
+- ✅ Admin Dashboard (To be implemented)
+
 ---
 
 ### 2. Employee User

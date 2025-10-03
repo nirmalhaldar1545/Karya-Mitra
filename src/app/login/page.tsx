@@ -104,12 +104,12 @@ export default function LoginPage() {
               </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" suppressHydrationWarning>
               <div>
                 <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-300">
                   Email Address
                 </label>
-                <div className="relative">
+                <div className="relative" suppressHydrationWarning>
                   <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                   <input
                     type="email"
@@ -118,8 +118,10 @@ export default function LoginPage() {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    autoComplete="email"
                     className="w-full rounded-lg border border-gray-700 bg-gray-800 py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-[#13FFAA] focus:outline-none focus:ring-2 focus:ring-[#13FFAA]/20 transition-all"
                     placeholder="john@example.com"
+                    suppressHydrationWarning
                   />
                 </div>
               </div>
@@ -128,7 +130,7 @@ export default function LoginPage() {
                 <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-300">
                   Password
                 </label>
-                <div className="relative">
+                <div className="relative" suppressHydrationWarning>
                   <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                   <input
                     type={showPassword ? "text" : "password"}
@@ -137,8 +139,10 @@ export default function LoginPage() {
                     value={formData.password}
                     onChange={handleChange}
                     required
+                    autoComplete="current-password"
                     className="w-full rounded-lg border border-gray-700 bg-gray-800 py-3 pl-12 pr-12 text-white placeholder-gray-500 focus:border-[#13FFAA] focus:outline-none focus:ring-2 focus:ring-[#13FFAA]/20 transition-all"
                     placeholder="••••••••"
+                    suppressHydrationWarning
                   />
                   <button
                     type="button"

@@ -7,3 +7,4 @@ export { AboutSection } from "./about-section";
 export { FeaturesSection } from "./features-section";
 export { TeamSection } from "./team-section";
 export { Footer } from "./footer";
+export { Providers } from "./providers";
