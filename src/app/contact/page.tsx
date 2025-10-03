@@ -4,11 +4,13 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { Navbar } from "~/components/navbar";
 import { Footer } from "~/components/footer";
+import { ParticlesBackground } from "~/components/ui/particles-background";
 import { FiMail, FiPhone, FiMapPin } from "react-icons/fi";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",
+    email: "",
     position: "",
     organization: "",
     message: "",
@@ -26,6 +28,7 @@ export default function ContactPage() {
       const subject = encodeURIComponent(`Contact Form: ${formData.name} from ${formData.organization}`);
       const body = encodeURIComponent(
         `Name: ${formData.name}\n` +
+        `Email: ${formData.email}\n` +
         `Position: ${formData.position}\n` +
         `Organization: ${formData.organization}\n\n` +
         `Message:\n${formData.message}`
@@ -37,7 +40,7 @@ export default function ContactPage() {
       window.location.href = mailtoLink;
       
       setSubmitStatus("success");
-      setFormData({ name: "", position: "", organization: "", message: "" });
+      setFormData({ name: "", email: "", position: "", organization: "", message: "" });
     } catch (error) {
       setSubmitStatus("error");
     } finally {
@@ -53,10 +56,11 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-gray-950 relative">
+      <ParticlesBackground />
       <Navbar />
       
-      <section className="px-4 py-24 pt-32">
+      <section className="px-4 py-24 pt-32 relative z-10">
         <div className="mx-auto max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -90,9 +94,28 @@ export default function ContactPage() {
                   value={formData.name}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-3 text-white placeholder-gray-500 focus:border-[#13FFAA] focus:outline-none focus:ring-2 focus:ring-[#13FFAA]/20"
                   placeholder="John Doe"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-300">
+                  Email Address *
+                </label>
+                <div className="relative">
+                  <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-lg border border-gray-700 bg-gray-800 py-3 pl-12 pr-4 text-white placeholder-gray-500 focus:border-[#13FFAA] focus:outline-none focus:ring-2 focus:ring-[#13FFAA]/20"
+                    placeholder="john@example.com"
+                  />
+                </div>
               </div>
 
               <div>
