@@ -3,25 +3,54 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Navbar } from "~/components/navbar";
 import { Footer } from "~/components/footer";
 import { ParticlesBackground } from "~/components/ui/particles-background";
-import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle } from "react-icons/fi";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt:", formData);
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(result.error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (result?.ok) {
+        // Successful login - redirect to dashboard
+        router.push("/dashboard");
+        router.refresh();
+      }
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(""); // Clear error when user types
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -64,6 +93,17 @@ export default function LoginPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="rounded-2xl border-2 border-gray-800 bg-gray-900/80 backdrop-blur-xl p-8 shadow-2xl"
           >
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 rounded-lg bg-red-500/10 border border-red-500/50 p-4 flex items-start gap-3"
+              >
+                <FiAlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={20} />
+                <p className="text-sm text-red-400">{error}</p>
+              </motion.div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-300">
@@ -112,11 +152,22 @@ export default function LoginPage() {
 
               <motion.button
                 type="submit"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full rounded-full bg-gradient-to-r from-[#13FFAA] to-[#0ea578] px-8 py-4 font-semibold text-gray-950 shadow-lg shadow-[#13FFAA]/30 transition-all hover:shadow-xl hover:shadow-[#13FFAA]/50"
+                disabled={isLoading}
+                whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                className="w-full rounded-full bg-gradient-to-r from-[#13FFAA] to-[#0ea578] px-8 py-4 font-semibold text-gray-950 shadow-lg shadow-[#13FFAA]/30 transition-all hover:shadow-xl hover:shadow-[#13FFAA]/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign In
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Signing In...
+                  </span>
+                ) : (
+                  "Sign In"
+                )}
               </motion.button>
             </form>
 

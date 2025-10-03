@@ -1,5 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Karya-Mitra Performance Management System - Complete Database Schema
+// This schema implements a comprehensive, secure, and interconnected database
+// for tracking employee performance, teams, KPIs, and organizational changes
 
 generator client {
     provider = "prisma-client-js"
@@ -7,68 +8,410 @@ generator client {
 
 datasource db {
     provider = "postgresql"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
-}
-
-// Necessary for Next auth
-model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String? // @db.Text
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
-
-    @@unique([provider, providerAccountId])
-}
-
-model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+// ============================================================================
+// CORE USER MANAGEMENT & AUTHENTICATION
+// ============================================================================
 
 model User {
     id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
+    firstName     String    @map("first_name")
+    lastName      String    @map("last_name")
+    email         String    @unique
+    emailVerified DateTime? @map("email_verified")
+    passwordHash  String?   @map("password_hash")
     image         String?
+    
+    // Role and Department
+    roleId        Int?      @map("role_id")
+    role          Role?     @relation(fields: [roleId], references: [id], onDelete: SetNull)
+    departmentId  Int?      @map("department_id")
+    department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+    
+    // Status tracking
+    status        String    @default("active") // 'active', 'inactive', 'suspended'
+    
+    // Timestamps
+    createdAt     DateTime  @default(now()) @map("created_at")
+    updatedAt     DateTime  @updatedAt @map("updated_at")
+    
+    // Relations
     accounts      Account[]
     sessions      Session[]
     posts         Post[]
+    
+    // Performance Management Relations
+    performances         Performance[]
+    feedbacksReceived    Feedback[]
+    teamMemberships      TeamMembership[]
+    managedTeams         Team[]
+    goals                EmployeeGoal[]
+    trainingEnrollments  EmployeeTrainingEnrollment[]
+    promotionsDemotions  PromotionDemotion[]
+    auditTrailActions    AuditTrail[]
+    
+    @@index([email])
+    @@index([roleId])
+    @@index([departmentId])
+    @@index([status])
+    @@map("users")
 }
 
+// NextAuth Account model
+model Account {
+    id                       String  @id @default(cuid())
+    userId                   String  @map("user_id")
+    type                     String
+    provider                 String
+    providerAccountId        String  @map("provider_account_id")
+    refresh_token            String? @db.Text
+    access_token             String? @db.Text
+    expires_at               Int?
+    token_type               String?
+    scope                    String?
+    id_token                 String? @db.Text
+    session_state            String?
+    refresh_token_expires_in Int?
+    
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    @@unique([provider, providerAccountId])
+    @@index([userId])
+    @@map("accounts")
+}
+
+// NextAuth Session model
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique @map("session_token")
+    userId       String   @map("user_id")
+    expires      DateTime
+    
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    @@index([userId])
+    @@map("sessions")
+}
+
+// NextAuth Verification Token
 model VerificationToken {
     identifier String
     token      String   @unique
     expires    DateTime
-
+    
     @@unique([identifier, token])
+    @@map("verification_tokens")
+}
+
+// Legacy Post model (can be removed if not needed)
+model Post {
+    id          Int      @id @default(autoincrement())
+    name        String
+    createdAt   DateTime @default(now()) @map("created_at")
+    updatedAt   DateTime @updatedAt @map("updated_at")
+    createdById String   @map("created_by_id")
+    
+    createdBy User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+    
+    @@index([name])
+    @@map("posts")
+}
+
+// ============================================================================
+// ROLE-BASED ACCESS CONTROL (RBAC)
+// ============================================================================
+
+model Role {
+    id          Int      @id @default(autoincrement())
+    roleName    String   @unique @map("role_name") // 'Employee', 'Manager', 'HR', 'Admin', 'Executive'
+    description String?
+    createdAt   DateTime @default(now()) @map("created_at")
+    
+    // Relations
+    users                User[]
+    permissions          RolePermission[]
+    oldRolePromotions    PromotionDemotion[] @relation("OldRole")
+    newRolePromotions    PromotionDemotion[] @relation("NewRole")
+    
+    @@map("roles")
+}
+
+model RolePermission {
+    id             Int      @id @default(autoincrement())
+    roleId         Int      @map("role_id")
+    permissionName String   @map("permission_name") // 'view_performance', 'edit_goals', 'manage_users', etc.
+    createdAt      DateTime @default(now()) @map("created_at")
+    
+    role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+    
+    @@unique([roleId, permissionName])
+    @@index([roleId])
+    @@map("roles_permissions")
+}
+
+// ============================================================================
+// ORGANIZATIONAL STRUCTURE
+// ============================================================================
+
+model Department {
+    id                 Int         @id @default(autoincrement())
+    departmentName     String      @unique @map("department_name")
+    parentDepartmentId Int?        @map("parent_department_id")
+    description        String?
+    createdAt          DateTime    @default(now()) @map("created_at")
+    
+    // Self-referencing for hierarchy
+    parentDepartment   Department?  @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
+    childDepartments   Department[] @relation("DepartmentHierarchy")
+    
+    // Relations
+    users        User[]
+    performances Performance[]
+    
+    @@index([parentDepartmentId])
+    @@map("departments")
+}
+
+model Team {
+    id         Int      @id @default(autoincrement())
+    teamName   String   @unique @map("team_name")
+    managerId  String?  @map("manager_id")
+    description String?
+    createdAt  DateTime @default(now()) @map("created_at")
+    
+    // Relations
+    manager              User?              @relation(fields: [managerId], references: [id], onDelete: SetNull)
+    teamMemberships      TeamMembership[]
+    oldTeamPromotions    PromotionDemotion[] @relation("OldTeam")
+    newTeamPromotions    PromotionDemotion[] @relation("NewTeam")
+    
+    @@index([managerId])
+    @@map("teams")
+}
+
+model TeamMembership {
+    id        Int       @id @default(autoincrement())
+    userId    String    @map("user_id")
+    teamId    Int       @map("team_id")
+    startDate DateTime  @default(now()) @map("start_date")
+    endDate   DateTime? @map("end_date")
+    status    String    @default("active") // 'active', 'left', 'on leave'
+    
+    // Relations
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+    
+    @@index([userId])
+    @@index([teamId])
+    @@index([status])
+    @@map("team_membership")
+}
+
+// ============================================================================
+// PERFORMANCE MANAGEMENT
+// ============================================================================
+
+model Performance {
+    id           Int      @id @default(autoincrement())
+    userId       String   @map("user_id")
+    departmentId Int?     @map("department_id")
+    kpiName      String   @map("kpi_name")
+    targetValue  Float    @map("target_value")
+    actualValue  Float    @map("actual_value")
+    score        Float    // Final performance score based on weighted metrics
+    scoreDate    DateTime @default(now()) @map("score_date") @db.Date
+    quarter      String?  // Q1, Q2, Q3, Q4
+    year         Int?
+    comments     String?  @db.Text
+    createdAt    DateTime @default(now()) @map("created_at")
+    updatedAt    DateTime @updatedAt @map("updated_at")
+    
+    // Relations
+    user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+    
+    @@index([userId])
+    @@index([departmentId])
+    @@index([scoreDate])
+    @@index([quarter, year])
+    @@map("performance")
+}
+
+model Feedback {
+    id           Int      @id @default(autoincrement())
+    userId       String   @map("user_id")
+    feedbackType String   @map("feedback_type") // 'Manager', 'Peer', 'Self', 'HR'
+    feedbackText String   @map("feedback_text") @db.Text
+    rating       Int?     // Optional rating 1-5
+    feedbackDate DateTime @default(now()) @map("feedback_date")
+    createdAt    DateTime @default(now()) @map("created_at")
+    
+    // Relations
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    @@index([userId])
+    @@index([feedbackType])
+    @@index([feedbackDate])
+    @@map("feedback")
+}
+
+model EmployeeGoal {
+    id                 Int      @id @default(autoincrement())
+    userId             String   @map("user_id")
+    goalDescription    String   @map("goal_description") @db.Text
+    targetDate         DateTime @map("target_date") @db.Date
+    progressPercentage Float    @default(0) @map("progress_percentage")
+    status             String   @default("ongoing") // 'ongoing', 'completed', 'failed', 'cancelled'
+    priority           String?  @default("medium") // 'low', 'medium', 'high'
+    createdAt          DateTime @default(now()) @map("created_at")
+    updatedAt          DateTime @updatedAt @map("updated_at")
+    
+    // Relations
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    @@index([userId])
+    @@index([status])
+    @@index([targetDate])
+    @@map("employee_goals")
+}
+
+// ============================================================================
+// TRAINING & DEVELOPMENT
+// ============================================================================
+
+model TrainingProgram {
+    id          Int      @id @default(autoincrement())
+    trainingName String  @map("training_name")
+    description String?  @db.Text
+    startDate   DateTime? @map("start_date") @db.Date
+    endDate     DateTime? @map("end_date") @db.Date
+    status      String   @default("upcoming") // 'upcoming', 'ongoing', 'completed', 'cancelled'
+    capacity    Int?     // Maximum number of participants
+    createdAt   DateTime @default(now()) @map("created_at")
+    
+    // Relations
+    enrollments EmployeeTrainingEnrollment[]
+    
+    @@index([status])
+    @@index([startDate])
+    @@map("training_programs")
+}
+
+model EmployeeTrainingEnrollment {
+    id             Int      @id @default(autoincrement())
+    userId         String   @map("user_id")
+    trainingId     Int      @map("training_id")
+    status         String   @default("enrolled") // 'enrolled', 'in_progress', 'completed', 'dropped'
+    completionDate DateTime? @map("completion_date") @db.Date
+    score          Float?   // Training assessment score
+    enrollmentDate DateTime @default(now()) @map("enrollment_date")
+    
+    // Relations
+    user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    training TrainingProgram @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+    
+    @@unique([userId, trainingId])
+    @@index([userId])
+    @@index([trainingId])
+    @@index([status])
+    @@map("employee_training_enrollments")
+}
+
+// ============================================================================
+// HR OPERATIONS
+// ============================================================================
+
+model PromotionDemotion {
+    id         Int      @id @default(autoincrement())
+    userId     String   @map("user_id")
+    oldRoleId  Int?     @map("old_role_id")
+    newRoleId  Int?     @map("new_role_id")
+    oldTeamId  Int?     @map("old_team_id")
+    newTeamId  Int?     @map("new_team_id")
+    changeType String   @map("change_type") // 'Promotion', 'Demotion', 'Team Change', 'Role Change'
+    changeDate DateTime @default(now()) @map("change_date")
+    reason     String?  @db.Text
+    approvedBy String?  @map("approved_by")
+    createdAt  DateTime @default(now()) @map("created_at")
+    
+    // Relations
+    user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+    oldRole Role? @relation("OldRole", fields: [oldRoleId], references: [id], onDelete: SetNull)
+    newRole Role? @relation("NewRole", fields: [newRoleId], references: [id], onDelete: SetNull)
+    oldTeam Team? @relation("OldTeam", fields: [oldTeamId], references: [id], onDelete: SetNull)
+    newTeam Team? @relation("NewTeam", fields: [newTeamId], references: [id], onDelete: SetNull)
+    
+    @@index([userId])
+    @@index([changeType])
+    @@index([changeDate])
+    @@map("promotions_demotions")
+}
+
+// ============================================================================
+// AUDIT & SECURITY
+// ============================================================================
+
+model AuditTrail {
+    id               Int      @id @default(autoincrement())
+    userId           String?  @map("user_id")
+    actionType       String   @map("action_type") // 'create', 'update', 'delete', 'promotion', 'demotion', etc.
+    affectedTable    String   @map("affected_table")
+    affectedRecordId Int?     @map("affected_record_id")
+    oldValue         Json?    @map("old_value")
+    newValue         Json?    @map("new_value")
+    ipAddress        String?  @map("ip_address")
+    userAgent        String?  @map("user_agent")
+    actionTimestamp  DateTime @default(now()) @map("action_timestamp")
+    
+    // Relations
+    user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+    
+    @@index([userId])
+    @@index([actionType])
+    @@index([affectedTable])
+    @@index([actionTimestamp])
+    @@map("audit_trail")
+}
+
+// ============================================================================
+// KPI TEMPLATES & CONFIGURATION
+// ============================================================================
+
+model KpiTemplate {
+    id          Int      @id @default(autoincrement())
+    kpiName     String   @map("kpi_name")
+    description String?  @db.Text
+    category    String   // 'HQ', 'Field', 'Common'
+    unit        String?  // 'days', 'percentage', 'count', etc.
+    targetValue Float?   @map("target_value")
+    weight      Float    @default(1.0) // Weight for scoring calculation
+    isActive    Boolean  @default(true) @map("is_active")
+    createdAt   DateTime @default(now()) @map("created_at")
+    updatedAt   DateTime @updatedAt @map("updated_at")
+    
+    @@index([category])
+    @@index([isActive])
+    @@map("kpi_templates")
+}
+
+// ============================================================================
+// NOTIFICATIONS & ALERTS
+// ============================================================================
+
+model Notification {
+    id          Int      @id @default(autoincrement())
+    userId      String   @map("user_id")
+    title       String
+    message     String   @db.Text
+    type        String   // 'info', 'warning', 'success', 'error'
+    isRead      Boolean  @default(false) @map("is_read")
+    link        String?  // Optional link to related resource
+    createdAt   DateTime @default(now()) @map("created_at")
+    
+    @@index([userId])
+    @@index([isRead])
+    @@index([createdAt])
+    @@map("notifications")
 }

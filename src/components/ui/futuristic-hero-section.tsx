@@ -3,13 +3,11 @@
 import { Stars } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import React, { useEffect, useState } from "react";
-import { FiArrowRight } from "react-icons/fi";
 import Link from "next/link";
 import {
   useMotionTemplate,
   useMotionValue,
   motion,
-  animate,
   useInView,
 } from "framer-motion";
 import { Building2, Users, TrendingUp, Clock } from "lucide-react";

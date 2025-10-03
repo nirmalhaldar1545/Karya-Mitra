@@ -12,7 +12,6 @@ import {
   TrendingUp 
 } from "lucide-react";
 import { GlowingEffect } from "./ui/glowing-effect";
-import { cn } from "~/lib/utils";
 
 export const FeaturesSection = () => {
   const features = [
