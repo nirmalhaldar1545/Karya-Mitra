@@ -31,30 +31,42 @@ export default function EmployeeDashboard() {
     redirect("/login");
   }
 
-  // Role-based access control - Only Employee role can access this dashboard
-  if (session?.user?.role && session.user.role !== "Employee") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-950">
-        <div className="max-w-md rounded-xl border border-red-500/20 bg-red-500/10 p-8 text-center">
-          <div className="mb-4 text-6xl">🚫</div>
-          <h1 className="mb-2 text-2xl font-bold text-white">Access Denied</h1>
-          <p className="mb-4 text-gray-400">
-            This dashboard is only accessible to employees. Your role is: <span className="font-semibold text-red-400">{session.user.role}</span>
-          </p>
-          <p className="text-sm text-gray-500">
-            Please contact your administrator if you believe this is an error.
-          </p>
-          <div className="mt-6">
-            <Link
-              href="/"
-              className="inline-block rounded-lg bg-[#13FFAA] px-6 py-2 font-semibold text-gray-950 hover:bg-[#0ea578] transition-colors"
-            >
-              Go to Home
-            </Link>
+  // Role-based routing - Redirect users to their appropriate dashboard
+  if (session?.user?.role) {
+    const role = session.user.role;
+    if (role === "Manager") {
+      redirect("/dashboard/manager");
+    } else if (role === "HR") {
+      redirect("/dashboard/hr");
+    } else if (role === "Executive") {
+      redirect("/dashboard/executive");
+    } else if (role === "Admin") {
+      redirect("/dashboard/admin");
+    } else if (role !== "Employee") {
+      // Unknown role - show access denied
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gray-950">
+          <div className="max-w-md rounded-xl border border-red-500/20 bg-red-500/10 p-8 text-center">
+            <div className="mb-4 text-6xl">🚫</div>
+            <h1 className="mb-2 text-2xl font-bold text-white">Access Denied</h1>
+            <p className="mb-4 text-gray-400">
+              Unknown role: <span className="font-semibold text-red-400">{role}</span>
+            </p>
+            <p className="text-sm text-gray-500">
+              Please contact your administrator if you believe this is an error.
+            </p>
+            <div className="mt-6">
+              <Link
+                href="/"
+                className="inline-block rounded-lg bg-[#13FFAA] px-6 py-2 font-semibold text-gray-950 hover:bg-[#0ea578] transition-colors"
+              >
+                Go to Home
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -17,6 +17,10 @@ import {
   Menu,
   X,
   User,
+  Users,
+  UserCheck,
+  Shield,
+  BarChart3,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -25,15 +29,60 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { data: session } = useSession();
 
-  const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "My KPIs", href: "/dashboard/kpis", icon: TrendingUp },
-    { name: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
-    { name: "Goals", href: "/dashboard/goals", icon: Target },
-    { name: "Achievements", href: "/dashboard/achievements", icon: Award },
-    { name: "Training", href: "/dashboard/training", icon: BookOpen },
-  ];
+  const getNavigationByRole = (role?: string) => {
+    const baseNavigation = [
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    ];
+
+    switch (role) {
+      case "Employee":
+        return [
+          ...baseNavigation,
+          { name: "My KPIs", href: "/dashboard/kpis", icon: TrendingUp },
+          { name: "Tasks", href: "/dashboard/tasks", icon: CheckSquare },
+          { name: "Goals", href: "/dashboard/goals", icon: Target },
+          { name: "Achievements", href: "/dashboard/achievements", icon: Award },
+          { name: "Training", href: "/dashboard/training", icon: BookOpen },
+        ];
+      case "Manager":
+        return [
+          ...baseNavigation,
+          { name: "Team Overview", href: "/dashboard/manager", icon: Users },
+          { name: "Performance", href: "/dashboard/manager/performance", icon: TrendingUp },
+          { name: "Goals", href: "/dashboard/manager/goals", icon: Target },
+          { name: "Reports", href: "/dashboard/manager/reports", icon: BarChart3 },
+        ];
+      case "HR":
+        return [
+          ...baseNavigation,
+          { name: "Employee Management", href: "/dashboard/hr", icon: Users },
+          { name: "Recruitment", href: "/dashboard/hr/recruitment", icon: UserCheck },
+          { name: "Training", href: "/dashboard/hr/training", icon: BookOpen },
+          { name: "Reports", href: "/dashboard/hr/reports", icon: BarChart3 },
+        ];
+      case "Executive":
+        return [
+          ...baseNavigation,
+          { name: "Organization Overview", href: "/dashboard/executive", icon: BarChart3 },
+          { name: "Strategic Goals", href: "/dashboard/executive/goals", icon: Target },
+          { name: "Reports", href: "/dashboard/executive/reports", icon: TrendingUp },
+        ];
+      case "Admin":
+        return [
+          ...baseNavigation,
+          { name: "System Admin", href: "/dashboard/admin", icon: Shield },
+          { name: "User Management", href: "/dashboard/admin/users", icon: Users },
+          { name: "System Config", href: "/dashboard/admin/config", icon: Settings },
+          { name: "Security", href: "/dashboard/admin/security", icon: Shield },
+        ];
+      default:
+        return baseNavigation;
+    }
+  };
+
+  const navigation = getNavigationByRole(session?.user?.role);
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -137,11 +186,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* User Menu */}
             <div className="flex items-center gap-3 rounded-lg border border-gray-800 bg-gray-800/50 px-3 py-2">
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#13FFAA] to-[#0ea578] flex items-center justify-center text-gray-950 font-semibold">
-                A
+                {session?.user?.firstName?.[0]}{session?.user?.lastName?.[0]}
               </div>
               <div className="hidden sm:block">
-                <p className="text-sm font-medium text-white">Admin User</p>
-                <p className="text-xs text-gray-400">Administrator</p>
+                <p className="text-sm font-medium text-white">
+                  {session?.user?.firstName} {session?.user?.lastName}
+                </p>
+                <p className="text-xs text-gray-400">{session?.user?.role}</p>
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Briefcase, Building2, MapPin, TrendingUp } from "lucide-react";
+import { api } from "~/trpc/react";
 
 interface PersonalOverviewProps {
   user?: {
@@ -14,9 +15,26 @@ interface PersonalOverviewProps {
 }
 
 export function PersonalOverview({ user }: PersonalOverviewProps) {
-  // Mock performance score - in real app, this would come from API
-  const performanceScore = 87;
+  const { data: overview, isLoading } = api.dashboard.getEmployeeOverview.useQuery();
+
+  const performanceScore = overview?.performanceScore || 0;
   const scoreColor = performanceScore >= 80 ? "#13FFAA" : performanceScore >= 60 ? "#FFA500" : "#FF4444";
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-6 lg:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-700 rounded mb-4"></div>
+              <div className="h-20 bg-gray-700 rounded mb-4"></div>
+              <div className="h-4 bg-gray-700 rounded"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
@@ -127,39 +145,39 @@ export function PersonalOverview({ user }: PersonalOverviewProps) {
         <div className="space-y-4">
           <div>
             <div className="mb-1 flex justify-between text-sm">
-              <span className="text-gray-400">Tasks Completed</span>
-              <span className="font-semibold text-white">24/30</span>
+              <span className="text-gray-400">Active Goals</span>
+              <span className="font-semibold text-white">{overview?.goals?.filter(g => g.status === 'ongoing').length || 0}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-gray-800">
               <div
                 className="h-full bg-gradient-to-r from-[#13FFAA] to-[#0ea578]"
-                style={{ width: "80%" }}
+                style={{ width: `${Math.min((overview?.goals?.filter(g => g.status === 'completed').length || 0) / (overview?.goals?.length || 1) * 100, 100)}%` }}
               />
             </div>
           </div>
 
           <div>
             <div className="mb-1 flex justify-between text-sm">
-              <span className="text-gray-400">Goals Progress</span>
-              <span className="font-semibold text-white">3/5</span>
+              <span className="text-gray-400">Goals Completed</span>
+              <span className="font-semibold text-white">{overview?.goals?.filter(g => g.status === 'completed').length || 0}/{overview?.goals?.length || 0}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-gray-800">
               <div
                 className="h-full bg-gradient-to-r from-blue-500 to-purple-600"
-                style={{ width: "60%" }}
+                style={{ width: `${(overview?.goals?.filter(g => g.status === 'completed').length || 0) / (overview?.goals?.length || 1) * 100}%` }}
               />
             </div>
           </div>
 
           <div>
             <div className="mb-1 flex justify-between text-sm">
-              <span className="text-gray-400">Training Completed</span>
-              <span className="font-semibold text-white">2/3</span>
+              <span className="text-gray-400">Recent Feedback</span>
+              <span className="font-semibold text-white">{overview?.feedbacks?.length || 0}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-gray-800">
               <div
                 className="h-full bg-gradient-to-r from-orange-500 to-red-600"
-                style={{ width: "66%" }}
+                style={{ width: "100%" }}
               />
             </div>
           </div>
