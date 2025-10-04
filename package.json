@@ -14,6 +14,7 @@
     "db:reset": "prisma migrate reset",
     "db:add-employee": "tsx scripts/add-employee.ts",
     "db:list-users": "tsx scripts/list-users.ts",
+    "db:setup-production": "tsx scripts/setup-production-db.ts",
     "dev": "next dev --turbo",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",

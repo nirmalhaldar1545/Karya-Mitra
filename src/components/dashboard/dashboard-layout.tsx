@@ -21,6 +21,10 @@ import {
   UserCheck,
   Shield,
   BarChart3,
+  Database,
+  Activity,
+  HelpCircle,
+  Wrench,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -71,11 +75,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         ];
       case "Admin":
         return [
-          ...baseNavigation,
-          { name: "System Admin", href: "/dashboard/admin", icon: Shield },
-          { name: "User Management", href: "/dashboard/admin/users", icon: Users },
-          { name: "System Config", href: "/dashboard/admin/config", icon: Settings },
-          { name: "Security", href: "/dashboard/admin/security", icon: Shield },
+          { name: "System Overview", href: "/dashboard/admin", icon: LayoutDashboard },
+          { name: "User Management", href: "/dashboard/admin", icon: Users },
+          { name: "Security & Audit", href: "/dashboard/admin", icon: Shield },
+          { name: "System Config", href: "/dashboard/admin", icon: Settings },
+          { name: "Data Management", href: "/dashboard/admin", icon: Database },
+          { name: "System Monitoring", href: "/dashboard/admin", icon: Activity },
+          { name: "Alerts & Notifications", href: "/dashboard/admin", icon: Bell },
+          { name: "Support & Help", href: "/dashboard/admin", icon: HelpCircle },
+          { name: "Maintenance", href: "/dashboard/admin", icon: Wrench },
         ];
       default:
         return baseNavigation;
