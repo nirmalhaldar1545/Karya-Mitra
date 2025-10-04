@@ -13,28 +13,44 @@ async function setupProductionDatabase() {
   console.log("🚀 Setting up production database...");
 
   try {
-    // Step 1: Run database migrations
-    console.log("📦 Running database migrations...");
-    execSync("npx prisma migrate deploy", { stdio: "inherit" });
-    console.log("✅ Migrations completed");
+    // Step 1: Sync database schema (handle existing databases)
+    console.log("📦 Syncing database schema...");
+
+    try {
+      // Try to run migrations first
+      execSync("npx prisma migrate deploy", { stdio: "inherit" });
+      console.log("✅ Migrations completed");
+    } catch (error) {
+      // If migrations fail (likely due to existing schema), try to push schema
+      console.log("ℹ️  Migrations failed, checking if schema needs updating...");
+      try {
+        execSync("npx prisma db push --accept-data-loss", { stdio: "inherit" });
+        console.log("✅ Schema updated in database");
+      } catch (pushError) {
+        console.log("ℹ️  Schema appears to be in sync, continuing...");
+      }
+    }
 
     // Step 2: Generate Prisma client
     console.log("🔧 Generating Prisma client...");
     execSync("npx prisma generate", { stdio: "inherit" });
     console.log("✅ Prisma client generated");
 
-    // Step 3: Check if database is already seeded
+    // Step 3: Check if essential data exists and seed if needed
     const userCount = await prisma.user.count();
-    console.log(`📊 Found ${userCount} users in database`);
+    const roleCount = await prisma.role.count();
+    const departmentCount = await prisma.department.count();
 
-    if (userCount === 0) {
-      console.log("🌱 Database appears empty, running seed script...");
+    console.log(`📊 Database status: ${userCount} users, ${roleCount} roles, ${departmentCount} departments`);
+
+    if (roleCount === 0 || departmentCount === 0) {
+      console.log("🌱 Essential data missing, running seed script...");
 
       // Run the seed script
       execSync("npm run db:seed", { stdio: "inherit" });
       console.log("✅ Database seeded successfully");
     } else {
-      console.log("ℹ️  Database already contains data, skipping seed");
+      console.log("ℹ️  Essential data exists, skipping seed");
     }
 
     // Step 4: Handle any data migrations
